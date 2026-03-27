@@ -1,60 +1,49 @@
-name: ⏰ Scheduled Deploy — Every 23 Hours
+name: ⏰ Scheduled Keep-Alive — Every 23 Hours
 
 on:
   schedule:
-    # Runs every 23 hours (at minute 0, every 23rd hour UTC)
-    - cron: '0 */23 * * *'
+    # Runs every 23 hours at 00:00 UTC
+    - cron: '0 0 * * *'
 
-  # Allow manual trigger from GitHub Actions tab
+  # Manual trigger from GitHub Actions tab
   workflow_dispatch:
     inputs:
       reason:
-        description: 'Reason for manual deploy'
+        description: 'Reason for manual trigger'
         required: false
-        default: 'Manual trigger'
+        default: 'Manual keep-alive'
 
 jobs:
-  keep-alive-deploy:
-    name: ⏰ Scheduled Keep-Alive Deploy
+  keep-alive:
+    name: ⏰ Ping Netlify Build Hook
     runs-on: ubuntu-latest
 
     steps:
-      - name: ⬇️ Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: 📦 Install dependencies
-        run: npm ci
-
-      - name: 🔨 Build project
-        run: npm run build
-
-      - name: 📋 Log deploy info
+      - name: 📋 Log trigger info
         run: |
-          echo "============================================"
-          echo "  Healthcare Strategy Platform"
-          echo "  Scheduled Deploy — $(date -u '+%Y-%m-%d %H:%M UTC')"
-          echo "  Trigger: ${{ github.event_name }}"
-          echo "  Reason: ${{ github.event.inputs.reason || 'Scheduled 23h keep-alive' }}"
-          echo "============================================"
-          echo "Build files:"
-          ls -lh dist/
+          echo "========================================"
+          echo "  Healthcare BA Intelligence Platform"
+          echo "  Keep-Alive Deploy Triggered"
+          echo "  Time : $(date -u '+%Y-%m-%d %H:%M UTC')"
+          echo "  Event: ${{ github.event_name }}"
+          echo "  Note : ${{ github.event.inputs.reason || 'Scheduled 23h cron' }}"
+          echo "========================================"
 
-      - name: 🌐 Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3.0
-        with:
-          publish-dir: './dist'
-          production-branch: main
-          production-deploy: true
-          deploy-message: "⏰ Scheduled deploy — $(date -u '+%Y-%m-%d %H:%M UTC')"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID:    ${{ secrets.NETLIFY_SITE_ID }}
+      - name: 🚀 Trigger Netlify Build Hook
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "${{ secrets.NETLIFY_BUILD_HOOK }}")
 
-      - name: ✅ Deploy complete
-        run: echo "Site is live at https://fluffy-taiyaki-ddc1f5.netlify.app"
+          echo "Netlify response: HTTP $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "201" ]; then
+            echo "✅ Build hook triggered successfully!"
+          else
+            echo "❌ Build hook failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi
+
+      - name: 🌐 Confirm site URL
+        run: |
+          echo "Site deploying → https://fluffy-taiyaki-ddc1f5.netlify.app"
+          echo "Deploy logs   → https://app.netlify.com/sites/fluffy-taiyaki-ddc1f5/deploys"

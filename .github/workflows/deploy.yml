@@ -1,4 +1,4 @@
-name: 🚀 Deploy to Netlify on Push
+name: ✅ Build Verification on Push
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  build-and-deploy:
-    name: Build & Deploy
+  verify-build:
+    name: Verify Build Passes
     runs-on: ubuntu-latest
 
     steps:
@@ -29,18 +29,10 @@ jobs:
 
       - name: ✅ Verify build output
         run: |
-          echo "Build completed. Files in dist/:"
-          ls -la dist/
-
-      - name: 🌐 Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3.0
-        with:
-          publish-dir: './dist'
-          production-branch: main
-          production-deploy: true
-          deploy-message: "Deploy from GitHub Actions — ${{ github.event.head_commit.message }}"
-          enable-pull-request-comment: true
-          enable-commit-comment: true
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID:    ${{ secrets.NETLIFY_SITE_ID }}
+          echo "========================================"
+          echo "  Build verified successfully ✅"
+          echo "  $(date -u '+%Y-%m-%d %H:%M UTC')"
+          echo "  Netlify is auto-deploying this push..."
+          echo "  Live → https://fluffy-taiyaki-ddc1f5.netlify.app"
+          echo "========================================"
+          ls -lh dist/
