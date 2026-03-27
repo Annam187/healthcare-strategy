@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import './App.css'
+import './styles/App.css'
 import Dashboard from './components/Dashboard'
 import WorkflowExplorer from './components/WorkflowExplorer'
 import StakeholderMap from './components/StakeholderMap'

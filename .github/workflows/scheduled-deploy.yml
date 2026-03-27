@@ -1,0 +1,60 @@
+name: ⏰ Scheduled Deploy — Every 23 Hours
+
+on:
+  schedule:
+    # Runs every 23 hours (at minute 0, every 23rd hour UTC)
+    - cron: '0 */23 * * *'
+
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual deploy'
+        required: false
+        default: 'Manual trigger'
+
+jobs:
+  keep-alive-deploy:
+    name: ⏰ Scheduled Keep-Alive Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔨 Build project
+        run: npm run build
+
+      - name: 📋 Log deploy info
+        run: |
+          echo "============================================"
+          echo "  Healthcare Strategy Platform"
+          echo "  Scheduled Deploy — $(date -u '+%Y-%m-%d %H:%M UTC')"
+          echo "  Trigger: ${{ github.event_name }}"
+          echo "  Reason: ${{ github.event.inputs.reason || 'Scheduled 23h keep-alive' }}"
+          echo "============================================"
+          echo "Build files:"
+          ls -lh dist/
+
+      - name: 🌐 Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: './dist'
+          production-branch: main
+          production-deploy: true
+          deploy-message: "⏰ Scheduled deploy — $(date -u '+%Y-%m-%d %H:%M UTC')"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID:    ${{ secrets.NETLIFY_SITE_ID }}
+
+      - name: ✅ Deploy complete
+        run: echo "Site is live at https://fluffy-taiyaki-ddc1f5.netlify.app"
